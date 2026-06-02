@@ -140,64 +140,125 @@ namespace Lactosure_api.Controllers
         }
 
 
+        //[HttpPost("login")]
+        //public async Task<IActionResult> Login([FromBody] JsonElement data)
+        //{
+        //    string email = data.GetProperty("email").GetString();
+        //    string password = data.GetProperty("password").GetString();
+
+        //    // Check email exists
+        //    var user = await _context.Users
+        //        .FirstOrDefaultAsync(x => x.Email == email);
+
+        //    if (user == null)
+        //    {
+        //        return Unauthorized(new
+        //        {
+        //            success = false,
+        //            message = "Email not found"
+        //        });
+        //    }
+
+        //    // Check status approved
+        //    if (user.Status == false)
+        //    {
+        //        return Unauthorized(new
+        //        {
+        //            success = false,
+        //            message = "User not approved"
+        //        });
+        //    }
+
+        //    // Verify BCrypt password
+        //    bool isPasswordValid =
+        //        BCrypt.Net.BCrypt.Verify(password, user.Password);
+
+        //    if (!isPasswordValid)
+        //    {
+        //        return Unauthorized(new
+        //        {
+        //            success = false,
+        //            message = "Incorrect password"
+        //        });
+        //    }
+
+        //    // Generate JWT
+        //    var token = _jwtService.GenerateToken(user.Email);
+
+        //    return Ok(new
+        //    {
+        //        success = true,
+        //        message = "Login successful",
+        //        token = token,
+
+        //        user = new
+        //        {
+        //            user.UId,
+        //            user.Name,
+        //            user.Email
+        //        }
+        //    });
+        //}
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] JsonElement data)
         {
-            string email = data.GetProperty("email").GetString();
-            string password = data.GetProperty("password").GetString();
-
-            // Check email exists
-            var user = await _context.Users
-                .FirstOrDefaultAsync(x => x.Email == email);
-
-            if (user == null)
+            try
             {
-                return Unauthorized(new
+                if (!data.TryGetProperty("email", out var emailProp) ||
+                    !data.TryGetProperty("password", out var passProp))
                 {
-                    success = false,
-                    message = "Email not found"
-                });
-            }
-
-            // Check status approved
-            if (user.Status == false)
-            {
-                return Unauthorized(new
-                {
-                    success = false,
-                    message = "User not approved"
-                });
-            }
-
-            // Verify BCrypt password
-            bool isPasswordValid =
-                BCrypt.Net.BCrypt.Verify(password, user.Password);
-
-            if (!isPasswordValid)
-            {
-                return Unauthorized(new
-                {
-                    success = false,
-                    message = "Incorrect password"
-                });
-            }
-
-            // Generate JWT
-            var token = _jwtService.GenerateToken(user.Email);
-
-            return Ok(new
-            {
-                success = true,
-                message = "Login successful",
-                token = token,
-
-                user = new
-                {
-                    user.UId,
-                    user.Name,
-                    user.Email
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Invalid request body"
+                    });
                 }
-            });
+
+                string email = emailProp.GetString();
+                string password = passProp.GetString();
+
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+
+                if (user == null)
+                {
+                    return Unauthorized(new { success = false, message = "Email not found" });
+                }
+
+                if (!user.Status)
+                {
+                    return Unauthorized(new { success = false, message = "User not approved" });
+                }
+
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.Password);
+
+                if (!isPasswordValid)
+                {
+                    return Unauthorized(new { success = false, message = "Incorrect password" });
+                }
+
+                var token = _jwtService.GenerateToken(user.Email);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Login successful",
+                    token,
+                    user = new
+                    {
+                        user.UId,
+                        user.Name,
+                        user.Email
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
         }
 
         [HttpGet("all-users")]
