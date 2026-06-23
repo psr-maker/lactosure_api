@@ -25,7 +25,7 @@ jobs:
       with:
         host: 168.231.121.19
         username: root
-        password: ${{ secrets.S;(C9D7shU&2aXn }}
+        password: ${{ secrets.VPS_PASSWORD }}
         source: "publish/*"
         target: "/var/www/lactosure_api"
 
@@ -34,6 +34,6 @@ jobs:
       with:
         host: 168.231.121.19
         username: root
-        password: ${{ secrets.S;(C9D7shU&2aXn }}
+        password: ${{ secrets.VPS_PASSWORD }}
         script: |
           systemctl restart lactosure.service
