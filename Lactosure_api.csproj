@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
+    <NoWarn>$(NoWarn);NETSDK1152</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
