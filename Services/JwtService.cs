@@ -1,7 +1,8 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
+using static Lactosure_api.Models.lacto;
 
 namespace Lactosure_api.Services
 {
@@ -14,10 +15,11 @@ namespace Lactosure_api.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(string email)
+        public string GenerateToken(int userId, string email)
         {
             var claims = new[]
             {
+                new Claim("id", userId.ToString()),
                 new Claim(ClaimTypes.Email, email)
             };
 

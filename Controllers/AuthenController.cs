@@ -140,65 +140,7 @@ namespace Lactosure_api.Controllers
         }
 
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> Login([FromBody] JsonElement data)
-        //{
-        //    string email = data.GetProperty("email").GetString();
-        //    string password = data.GetProperty("password").GetString();
 
-        //    // Check email exists
-        //    var user = await _context.Users
-        //        .FirstOrDefaultAsync(x => x.Email == email);
-
-        //    if (user == null)
-        //    {
-        //        return Unauthorized(new
-        //        {
-        //            success = false,
-        //            message = "Email not found"
-        //        });
-        //    }
-
-        //    // Check status approved
-        //    if (user.Status == false)
-        //    {
-        //        return Unauthorized(new
-        //        {
-        //            success = false,
-        //            message = "User not approved"
-        //        });
-        //    }
-
-        //    // Verify BCrypt password
-        //    bool isPasswordValid =
-        //        BCrypt.Net.BCrypt.Verify(password, user.Password);
-
-        //    if (!isPasswordValid)
-        //    {
-        //        return Unauthorized(new
-        //        {
-        //            success = false,
-        //            message = "Incorrect password"
-        //        });
-        //    }
-
-        //    // Generate JWT
-        //    var token = _jwtService.GenerateToken(user.Email);
-
-        //    return Ok(new
-        //    {
-        //        success = true,
-        //        message = "Login successful",
-        //        token = token,
-
-        //        user = new
-        //        {
-        //            user.UId,
-        //            user.Name,
-        //            user.Email
-        //        }
-        //    });
-        //}
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] JsonElement data)
         {
@@ -214,29 +156,65 @@ namespace Lactosure_api.Controllers
                     });
                 }
 
-                string email = emailProp.GetString();
-                string password = passProp.GetString();
+                var email = emailProp.GetString()?.Trim();
+                var password = passProp.GetString();
 
-                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Email or password is empty"
+                    });
+                }
+
+                var user = await _context.Users
+                    .FirstOrDefaultAsync(x => x.Email == email);
 
                 if (user == null)
                 {
-                    return Unauthorized(new { success = false, message = "Email not found" });
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "Email not found"
+                    });
                 }
 
                 if (!user.Status)
                 {
-                    return Unauthorized(new { success = false, message = "User not approved" });
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "User not approved"
+                    });
                 }
 
-                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.Password);
+                // SAFE BCrypt check (prevents "Invalid salt version" crash)
+                bool isPasswordValid = false;
+
+                try
+                {
+                    isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.Password);
+                }
+                catch
+                {
+                    return StatusCode(500, new
+                    {
+                        success = false,
+                        message = "Password format error in database (invalid hash)"
+                    });
+                }
 
                 if (!isPasswordValid)
                 {
-                    return Unauthorized(new { success = false, message = "Incorrect password" });
+                    return Unauthorized(new
+                    {
+                        success = false,
+                        message = "Incorrect password"
+                    });
                 }
 
-                var token = _jwtService.GenerateToken(user.Email);
+                var token = _jwtService.GenerateToken(user.UId,user.Email);
 
                 return Ok(new
                 {

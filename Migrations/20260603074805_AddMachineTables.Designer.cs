@@ -4,6 +4,7 @@ using Lactosure_api.DB_Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lactosure_api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260603074805_AddMachineTables")]
+    partial class AddMachineTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,30 +24,6 @@ namespace Lactosure_api.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("Lactosure_api.Models.lacto+BleDevice", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BleName")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("MacAddress")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("BleDevice");
-                });
 
             modelBuilder.Entity("Lactosure_api.Models.lacto+Machine", b =>
                 {
@@ -156,36 +135,6 @@ namespace Lactosure_api.Migrations
                     b.ToTable("Society");
                 });
 
-            modelBuilder.Entity("Lactosure_api.Models.lacto+UserFace", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("EnrolledAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("FaceEmbedding")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FaceImage")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserFace");
-                });
-
             modelBuilder.Entity("Lactosure_api.Models.lacto+Users", b =>
                 {
                     b.Property<int>("UId")
@@ -225,7 +174,7 @@ namespace Lactosure_api.Migrations
                         .IsRequired();
 
                     b.HasOne("Lactosure_api.Models.lacto+Society", "Society")
-                        .WithMany("Machines")
+                        .WithMany()
                         .HasForeignKey("SID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -233,11 +182,6 @@ namespace Lactosure_api.Migrations
                     b.Navigation("MachineType");
 
                     b.Navigation("Society");
-                });
-
-            modelBuilder.Entity("Lactosure_api.Models.lacto+Society", b =>
-                {
-                    b.Navigation("Machines");
                 });
 #pragma warning restore 612, 618
         }
