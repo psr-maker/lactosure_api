@@ -17,23 +17,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Install EF tool
-      run: dotnet tool install --global dotnet-ef
-
-    - name: Add tools to PATH
-      run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
-
     - name: Restore dependencies
       run: dotnet restore
 
-    # 🔥 IMPORTANT: RUN MIGRATIONS HERE (GITHUB SIDE)
-    - name: Run EF migrations
-      env:
-        ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION }}
-      run: dotnet ef database update --project Lactosure_api.csproj
-
     - name: Publish project
-      run: dotnet publish Lactosure_api.csproj -c Release -o publish
+      run: dotnet publish ./Lactosure_api.csproj -c Release -o publish
 
     - name: Copy files to VPS
       uses: appleboy/scp-action@v0.1.7
@@ -44,11 +32,14 @@ jobs:
         source: "publish/*"
         target: "/var/www/lactosure_api"
 
-    - name: Restart API
+    - name: Run migrations + restart on VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: 168.231.121.19
         username: root
         password: ${{ secrets.VPS_PASSWORD }}
         script: |
+          cd /var/www/lactosure_api
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef database update
           systemctl restart lactosure.service
