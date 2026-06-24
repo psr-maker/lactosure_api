@@ -8,7 +8,7 @@ using static Lactosure_api.Models.lacto;
 
 namespace Lactosure_api.Controllers
 {
-   
+
     [Route("api/face")]
     [ApiController]
     public class FaceController : ControllerBase
