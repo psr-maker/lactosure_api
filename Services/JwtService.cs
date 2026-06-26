@@ -18,10 +18,10 @@ namespace Lactosure_api.Services
         public string GenerateToken(int userId, string email)
         {
             var claims = new[]
-            {
-                new Claim("id", userId.ToString()),
-                new Claim(ClaimTypes.Email, email)
-            };
+    {
+        new Claim("id", userId.ToString()),
+        new Claim("email", email)   
+    };
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
