@@ -127,6 +127,26 @@ namespace Lactosure_api.Models
 
             public DateTime EnrolledAt { get; set; } 
         }
+
+        public class CorrMethodHistory
+        {
+            [Key]
+            public int Id { get; set; }
+
+            public int UId { get; set; }
+
+            [Required]
+            [MaxLength(50)]
+            public string CorrMethod { get; set; } 
+
+            [Required]
+            [MaxLength(20)]
+            public string Channel { get; set; } 
+
+            public DateTime Date { get; set; }
+        }
+
+
         //**********************************************
         public class AddMachineDto
         {
@@ -164,6 +184,10 @@ namespace Lactosure_api.Models
             public int UserId { get; set; }
 
             public IFormFile Image { get; set; }
+        }
+        public class FaceStatusRequest
+        {
+            public bool Status { get; set; }
         }
     }
 }

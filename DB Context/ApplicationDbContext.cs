@@ -17,6 +17,7 @@ namespace Lactosure_api.DB_Context
         public DbSet<Machine> Machine { get; set; }
         public DbSet<BleDevice> BleDevice { get; set; }
         public DbSet<UserFace> UserFace { get; set; }
+        public DbSet<CorrMethodHistory> CorrMethodHistory { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

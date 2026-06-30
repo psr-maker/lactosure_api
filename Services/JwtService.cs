@@ -15,12 +15,13 @@ namespace Lactosure_api.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(int userId, string email)
+        public string GenerateToken(int userId, string email,string name)
         {
             var claims = new[]
     {
         new Claim("id", userId.ToString()),
-        new Claim("email", email)   
+        new Claim("email", email),
+        new Claim("name", name)
     };
 
             var key = new SymmetricSecurityKey(

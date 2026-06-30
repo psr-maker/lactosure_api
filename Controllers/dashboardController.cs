@@ -2,16 +2,17 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Lactosure_api.Models.lacto;
 
 namespace Lactosure_api.Controllers
 {
-    [Route("api/AdmDashboard")]
+    [Route("api/Dashboard")]
     [ApiController]
-    public class AdmindashboardController : ControllerBase
+    public class dashboardController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public AdmindashboardController(ApplicationDbContext context)
+        public dashboardController(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -33,6 +34,34 @@ namespace Lactosure_api.Controllers
 
                 totalMachineTypes = await _context.MachineType.CountAsync()
             });
+        }
+
+        [HttpPost("CorrMethodSave")]
+        public async Task<IActionResult> Save([FromBody] CorrMethodHistory history)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            history.Date = DateTime.UtcNow;
+
+            _context.CorrMethodHistory.Add(history);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Correction method saved successfully.",
+                data = history
+            });
+        }
+        [HttpGet("GetCorrMethodHistory/{uid}")]
+        public async Task<IActionResult> GetCorrMethodHistory(int uid)
+        {
+            var history = await _context.CorrMethodHistory
+                .Where(x => x.UId == uid)
+                .OrderByDescending(x => x.Date)
+                .ToListAsync();
+
+            return Ok(history);
         }
     }
 

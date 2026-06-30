@@ -22,27 +22,102 @@ namespace Lactosure_api.Controllers
             _db = db;
         }
 
+        //[HttpPost("register")]
+        //public async Task<IActionResult> Register([FromForm] IFormFile file, [FromForm] int userId)
+        //{
+        //    using var ms = new MemoryStream();
+        //    await file.CopyToAsync(ms);
+
+        //    var embedding = await _faceService.GetEmbedding(ms.ToArray());
+
+        //    var userFace = new UserFace
+        //    {
+        //        UserId = userId,
+        //        FaceImage = Convert.ToBase64String(ms.ToArray()),
+        //        FaceEmbedding = JsonSerializer.Serialize(embedding),
+        //        EnrolledAt = DateTime.UtcNow,
+        //        Status = true
+        //    };
+
+        //    _db.UserFace.Add(userFace);
+        //    await _db.SaveChangesAsync();
+
+        //    return Ok(new { message = "Face registered" });
+        //}
+
+
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromForm] IFormFile file, [FromForm] int userId)
         {
-            using var ms = new MemoryStream();
-            await file.CopyToAsync(ms);
-
-            var embedding = await _faceService.GetEmbedding(ms.ToArray());
-
-            var userFace = new UserFace
+            try
             {
-                UserId = userId,
-                FaceImage = Convert.ToBase64String(ms.ToArray()),
-                FaceEmbedding = JsonSerializer.Serialize(embedding),
-                EnrolledAt = DateTime.UtcNow,
-                Status = true
-            };
+                // 🔴 Validate inputs
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "Face image is required" });
 
-            _db.UserFace.Add(userFace);
-            await _db.SaveChangesAsync();
+                if (userId <= 0)
+                    return BadRequest(new { message = "Invalid userId" });
 
-            return Ok(new { message = "Face registered" });
+                // 📦 Read file
+                using var ms = new MemoryStream();
+                await file.CopyToAsync(ms);
+
+                var imageBytes = ms.ToArray();
+
+                // 🔍 Get embedding (CRITICAL POINT)
+                var embedding = await _faceService.GetEmbedding(imageBytes);
+
+                if (embedding == null)
+                    return BadRequest(new { message = "No face detected in image" });
+
+                // 🔎 Check existing user face
+                var existing = _db.UserFace.FirstOrDefault(x => x.UserId == userId);
+
+                if (existing != null)
+                {
+                    // 🔁 UPDATE existing
+                    existing.FaceImage = Convert.ToBase64String(imageBytes);
+                    existing.FaceEmbedding = JsonSerializer.Serialize(embedding);
+                    existing.EnrolledAt = DateTime.UtcNow;
+                    existing.Status = true;
+                }
+                else
+                {
+                    // ➕ INSERT new
+                    var newFace = new UserFace
+                    {
+                        UserId = userId,
+                        FaceImage = Convert.ToBase64String(imageBytes),
+                        FaceEmbedding = JsonSerializer.Serialize(embedding),
+                        EnrolledAt = DateTime.UtcNow,
+                        Status = true
+                    };
+
+                    _db.UserFace.Add(newFace);
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = existing != null
+                        ? "Face updated successfully"
+                        : "Face registered successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                // 🚨 IMPORTANT: return real error for debugging
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Server error occurred",
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
+            }
         }
 
         [Authorize]
@@ -130,6 +205,80 @@ namespace Lactosure_api.Controllers
             }
         }
 
+
+        [HttpGet("face-details/{userId}")]
+        public async Task<IActionResult> GetUserFace(int userId)
+        {
+            var face = await _db.UserFace
+                .Where(x => x.UserId == userId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.UserId,
+                    x.FaceImage,
+                    x.EnrolledAt,
+                    x.Status
+                })
+                .FirstOrDefaultAsync();
+
+            if (face == null)
+            {
+                return NotFound(new
+                {
+                    message = "Face not found"
+                });
+            }
+
+            return Ok(face);
+        }
+
+        [HttpPut("face-status/{userId}")]
+        public async Task<IActionResult> ChangeFaceStatus(int userId, [FromBody] FaceStatusRequest request)
+        {
+            var face = await _db.UserFace
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (face == null)
+            {
+                return NotFound(new
+                {
+                    message = "Face record not found for this user."
+                });
+            }
+
+            face.Status = request.Status;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Status updated successfully"
+            });
+        }
+        [Authorize]
+        [HttpGet("face-statuscheck")]
+        public async Task<IActionResult> GetFaceStatus()
+        {
+            var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+
+            var face = await _db.UserFace
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (face == null)
+            {
+                return Ok(new
+                {
+                    enrolled = false,
+                    status = false
+                });
+            }
+
+            return Ok(new
+            {
+                enrolled = true,
+                status = face.Status
+            });
+        }
         private double CosineSimilarity(List<float> a, List<float> b)
         {
             double dot = 0, magA = 0, magB = 0;

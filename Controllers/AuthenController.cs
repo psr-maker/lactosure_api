@@ -214,7 +214,7 @@ namespace Lactosure_api.Controllers
                     });
                 }
 
-                var token = _jwtService.GenerateToken(user.UId,user.Email);
+                var token = _jwtService.GenerateToken(user.UId,user.Email,user.Name);
 
                 return Ok(new
                 {
