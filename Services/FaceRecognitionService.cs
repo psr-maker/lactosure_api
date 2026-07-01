@@ -26,7 +26,7 @@ public class FaceService
 
         var json = await response.Content.ReadAsStringAsync();
         Console.WriteLine(json);
-        Console.WriteLine("-------------------");
+        Console.WriteLine("------------------");
 
         var result = JsonSerializer.Deserialize<EmbeddingResponse>(
             json,
